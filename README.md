@@ -90,8 +90,3 @@ Step 5: Orchestration with Ansible
 
 
 ---
-
-👉 Suggestion: Add this as `README.md` in your repo, commit, and push.  
-Then we can continue to **Step 2 (multi-device inventory + CSV export)**.  
-
-Do you want me to scaffold Step 2 now (with a `devices.yaml` and CSV writer), or finish polishing Step 1 first
