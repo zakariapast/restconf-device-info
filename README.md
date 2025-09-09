@@ -68,25 +68,7 @@ Example Output
 }
 
 Notes
-
 This project uses Cisco DevNet Always-On Sandbox
-.
-
 Self-signed certs are ignored (verify=False) for sandbox use only.
-
 Do not commit .env or real credentials to Git.
 
-Next Steps
-
-This is Step 1 of a bigger roadmap:
-
-Step 2: Collect inventory from multiple devices → save as CSV/Excel
-
-Step 3: Automate configuration with Jinja2 templates
-
-Step 4: Cloud API automation (Cisco Meraki Dashboard)
-
-Step 5: Orchestration with Ansible
-
-
----
