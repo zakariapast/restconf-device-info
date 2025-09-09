@@ -1,0 +1,29 @@
+{
+  "host": "https://devnetsandboxiosxec8k.cisco.com:443",
+  "hostname": "Cat8K",
+  "version": "17.9",
+  "serial_number": "9VNZGF5ZOKE",
+  "interfaces": [
+    {
+      "name": "GigabitEthernet1",
+      "admin_enabled": true,
+      "oper_status": null
+    },
+    {
+      "name": "GigabitEthernet2",
+      "admin_enabled": false,
+      "oper_status": null
+    },
+    {
+      "name": "GigabitEthernet3",
+      "admin_enabled": false,
+      "oper_status": null
+    },
+    {
+      "name": "Loopback15",
+      "admin_enabled": true,
+      "oper_status": null
+    }
+  ],
+  "collected_at": "2025-09-09 18:34:14"
+}
