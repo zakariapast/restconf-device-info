@@ -1,0 +1,6 @@
+devices:
+  - name: iosxe-1
+    host: "https://sandbox-iosxe-latest-1.cisco.com:443"
+    username: "developer"
+    password: "your-password-here"
+    verify_tls: false
