@@ -1,0 +1,16 @@
+! ===== Intent-Rendered Config =====
+! Hostname
+hostname {{ hostname }}
+
+! VLANs
+{% for vlan in vlans %}
+vlan {{ vlan.id }}
+ name {{ vlan.name }}
+{% endfor %}
+
+! OSPF
+router ospf {{ ospf.process_id }}
+{% for n in ospf.networks %}
+ network {{ n.network }} area {{ n.area }}
+{% endfor %}
+! ===== End =====
