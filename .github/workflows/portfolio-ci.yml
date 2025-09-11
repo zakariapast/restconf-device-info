@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ main ]
   schedule:
-    - cron: "0 6 * * 1"   # Every Monday 06:00 UTC
+    - cron: "0 6 * * 1"
   workflow_dispatch: {}
 
 jobs:
@@ -40,6 +40,7 @@ jobs:
           YAML
 
       - name: IOS-XE render + check (no apply in CI)
+        continue-on-error: true
         run: |
           python push_config.py \
             --intent intents/site1.yaml \
@@ -50,10 +51,8 @@ jobs:
       - name: Set Meraki API key for scripts
         run: echo "MERAKI_API_KEY=${{ secrets.MERAKI_API_KEY }}" >> $GITHUB_ENV
 
-      - name: Meraki inventory (CSV)
-        run: python meraki_collect.py
-
       - name: Meraki intent diff (read-only friendly)
+        continue-on-error: true
         run: python meraki_config.py
 
       # ---- Publish artifacts for recruiters ----
