@@ -1,0 +1,66 @@
+name: Network Automation CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: "0 6 * * 1"   # Every Monday 06:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  run-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # ---- IOS-XE section ----
+      - name: Create devices.yaml from secrets (not committed)
+        run: |
+          cat > devices.yaml <<'YAML'
+          devices:
+            - name: iosxe-1
+              host: "${{ secrets.IOSXE_HOST }}"
+              username: "${{ secrets.IOSXE_USER }}"
+              password: "${{ secrets.IOSXE_PASS }}"
+              verify_tls: false
+          YAML
+
+      - name: IOS-XE render + check (no apply in CI)
+        run: |
+          python push_config.py \
+            --intent intents/site1.yaml \
+            --template templates/base_config.j2 \
+            --check
+
+      # ---- Meraki section ----
+      - name: Set Meraki API key for scripts
+        run: echo "MERAKI_API_KEY=${{ secrets.MERAKI_API_KEY }}" >> $GITHUB_ENV
+
+      - name: Meraki inventory (CSV)
+        run: python meraki_collect.py
+
+      - name: Meraki intent diff (read-only friendly)
+        run: python meraki_config.py
+
+      # ---- Publish artifacts for recruiters ----
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: automation-results
+          path: |
+            output/**
+          if-no-files-found: ignore
