@@ -1,175 +1,169 @@
-# RESTCONF Network Automation Portfolio
+# Network Automation Portfolio
 
-This repository demonstrates a progressive **network automation portfolio** using Cisco DevNet Sandboxes, RESTCONF, Python, and related tools.
+This repository contains step-by-step labs demonstrating **network automation** using Cisco DevNet sandboxes, RESTCONF (IOS-XE), and Meraki Dashboard API.
 
-Each step builds on the previous one, moving from data collection → multi-device inventory → configuration automation.
+Each step builds on the previous one, showing how to go from simple device info collection to intent-driven configuration management and multi-vendor workflows.
 
 ---
 
-## 📍 Step 1 — Device Info Collector
+## Step 1 — RESTCONF Device Info Collector
 
-A simple Python script that connects to a Cisco IOS-XE sandbox using **RESTCONF**, collects device information, and saves the results as JSON.
+* Connect to **Cisco IOS-XE Always-On Sandbox**
+* Use Python `requests` + RESTCONF to collect device facts
+* Store results as JSON files in `output/`
 
-### Features
+**Key files:**
 
-* Connects to Cisco IOS-XE device via RESTCONF
-* Collects:
+* `collect_device_info.py`
+* `.env.example`
+* `requirements.txt`
 
-  * Hostname
-  * Software version
-  * Serial number (if available)
-  * Interfaces (name, admin state, operational status)
-* Saves output to timestamped JSON file under `output/`
-
-### Run
+**Run:**
 
 ```bash
 python collect_device_info.py
 ```
 
-Output example:
+**Example Output:**
 
 ```json
 {
-  "host": "https://sandbox-iosxe-latest-1.cisco.com:443",
-  "hostname": "ios-xe-mgmt",
+  "host": "https://devnetsandboxiosxe.cisco.com:443",
+  "hostname": "ios-xe-mgmt.cisco.com",
   "version": "17.9.1a",
-  "serial_number": "9Z123ABC456",
-  "interfaces": [
-    {"name": "GigabitEthernet1", "admin_enabled": true, "oper_status": "up"},
-    {"name": "Loopback0", "admin_enabled": true, "oper_status": "up"}
-  ],
-  "collected_at": "2025-09-09 18:30:12"
+  "serial_number": "ABC12345",
+  "interfaces": ["GigabitEthernet1", "Loopback0"],
+  "collected_at": "2025-09-09T18:11:48"
 }
 ```
 
 ---
 
-## 📍 Step 2 — Multi-Device Inventory (CSV Export)
+## Step 2 — Multi-Device Inventory + CSV Export
 
-Expands Step 1 into a **multi-device collector** that loops across multiple devices and produces both JSON and consolidated CSV reports.
+* Support multiple devices via `devices.yaml`
+* Export collected info into a CSV for reporting
 
-### Features
+**Key files:**
 
-* Read device connection details from `devices.yaml`
-* Collect hostname, version, serial number, interface counts
-* Save one JSON per device in `output/`
-* Save one consolidated CSV report (timestamped)
+* `collect_inventory.py`
+* `devices.example.yaml`
 
-### Example CSV Columns
-
-```
-device_name, host, hostname, version, serial_number,
-interfaces_total, interfaces_up, interfaces_down,
-collected_at, status, error
-```
-
-### Usage
+**Run:**
 
 ```bash
 python collect_inventory.py
 ```
 
-### Important Notes
+**Example CSV:**
 
-* Do **NOT** commit `devices.yaml` with real credentials.
-* Instead, use `devices.example.yaml` as a safe template:
-
-```yaml
-devices:
-  - name: iosxe-1
-    host: "https://sandbox-iosxe-latest-1.cisco.com:443"
-    username: "developer"
-    password: "your-password-here"
-    verify_tls: false
+```csv
+hostname,version,serial_number
+CSR1kv-1,17.9.1a,ABCD1234
+CSR1kv-2,17.9.1a,EFGH5678
 ```
 
 ---
 
-## 📍 Step 3 — Configuration Automation with Jinja2 + RESTCONF
+## Step 3 — Jinja2 Templates + RESTCONF Config Push
 
-Move from **read-only inventory** to **configuration automation** by describing intent in YAML, rendering configs with Jinja2 templates, and pushing them via RESTCONF.
+* Define **intent YAML** (desired state)
+* Render configs using **Jinja2 templates**
+* Push hostname + loopback interfaces via RESTCONF
+* Add `--check` mode: verify intent vs. device state (mini diff)
 
-### Project Structure
+**Key files:**
 
-```
-restconf-device-info/
-├─ templates/
-│   └─ base_config.j2         # Jinja2 template for device configs
-├─ intents/
-│   └─ site1.yaml             # Intent file describing VLANs, OSPF, etc.
-├─ push_config.py             # Python script to render + push configs
-├─ collect_device_info.py     # Step 1 script
-├─ collect_inventory.py       # Step 2 script
-├─ devices.example.yaml       # Device connection details (safe example)
-├─ requirements.txt           # Updated with Jinja2
-└─ README.md                  # Documentation
-```
+* `intents/site1.yaml`
+* `templates/base_config.j2`
+* `push_config.py` (supports `--apply` and `--check`)
+* `verify_all.py`
 
-### Example Intent (`intents/site1.yaml`)
-
-```yaml
-vlans:
-  - id: 10
-    name: Users
-  - id: 20
-    name: Voice
-
-ospf:
-  process_id: 1
-  networks:
-    - { network: "10.10.10.0/24", area: 0 }
-    - { network: "10.20.20.0/24", area: 0 }
-```
-
-### Example Template (`templates/base_config.j2`)
-
-```jinja
-! VLAN Configuration
-{% for vlan in vlans %}
-vlan {{ vlan.id }}
- name {{ vlan.name }}
-{% endfor %}
-
-! OSPF Configuration
-router ospf {{ ospf.process_id }}
-{% for net in ospf.networks %}
- network {{ net.network }} area {{ net.area }}
-{% endfor %}
-```
-
-### Requirements
-
-Add Jinja2 to `requirements.txt`:
-
-```
-requests
-python-dotenv
-PyYAML
-Jinja2
-```
-
-Install with:
-
-```bash
-pip install -r requirements.txt
-```
-
-### Usage
+**Render only:**
 
 ```bash
 python push_config.py --intent intents/site1.yaml --template templates/base_config.j2
 ```
 
-### Output
+**Render + Apply + Check:**
 
-* `output/site1_rendered.txt` → the generated CLI config
-* `output/site1_response.json` → RESTCONF API response
+```bash
+python push_config.py --intent intents/site1.yaml --template templates/base_config.j2 --apply --check
+```
+
+**Verify RESTCONF directly:**
+
+```bash
+curl -k -u developer:C1sco12345 \
+  -H "Accept: application/yang-data+json" \
+  https://sandbox-iosxe-latest-1.cisco.com:443/restconf/data/Cisco-IOS-XE-native:native/hostname
+```
+
+**Example diff summary (JSON):**
+
+```json
+{
+  "item": "hostname",
+  "intent": "BRANCH1-DEMO",
+  "actual": "BRANCH1-DEMO",
+  "match": true
+}
+```
 
 ---
 
-## 📌 Roadmap
+## Step 4 — Meraki Dashboard API (Read-Only Sandbox)
 
-* Step 4: Meraki Dashboard API automation
-* Step 5: Orchestration with Ansible
-* Step 6: Telemetry + Monitoring
+* Use **Meraki Always-On Sandbox**
+* Collect orgs/networks/devices into CSV
+* Define **intent YAML** for SSID configuration
+* Generate a **diff JSON** (intent vs. actual) — sandbox is read-only so no writes allowed
+* Verify current SSID settings via API
+
+**Key files:**
+
+* `meraki_collect.py` → export orgs, networks, devices
+* `meraki_config.py` → intent-to-diff (gracefully handles 403 Forbidden)
+* `verify_meraki.py` → read back SSID config
+* `intents/meraki_wifi.yaml`
+
+**Collect inventory:**
+
+```bash
+python meraki_collect.py
+```
+
+**Plan (intent → diff):**
+
+```bash
+python meraki_config.py
+```
+
+**Verify:**
+
+```bash
+python verify_meraki.py
+```
+
+**Example diff output:**
+
+```json
+{
+  "org": "DevNet Sandbox",
+  "network": "DevNet Sandbox ALWAYS ON",
+  "number": 7,
+  "changes": {
+    "name": "Portfolio-Demo",
+    "psk": "Portf0lio-Wifi!"
+  },
+  "note": "403 Forbidden on sandbox (read-only). Changes not applied."
+}
+```
+
+---
+
+## Next Steps
+
+* Step 5: Orchestration with Ansible or GitHub Actions (infra-as-code pipeline)
+* Add rollback functionality for IOS-XE configs
+* Polish README with screenshots of JSON/CSV/verification results
