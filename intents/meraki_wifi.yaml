@@ -1,0 +1,12 @@
+# choose target by name (safer for demos)
+target:
+  organization_name: "DevNet Sandbox"   # must match your Meraki org name
+  network_name: "DevNet Sandbox ALWAYS ON"   # must be a network with 'wireless' product type
+
+ssid:
+  number: 7                   # 0..14 (Meraki supports up to 15 SSIDs)
+  name: "Portfolio-Demo"
+  enabled: true
+  authMode: "psk"
+  psk: "Portf0lio-Wifi!"
+  ipAssignmentMode: "NAT_MODE"   # or "Bridge mode"
