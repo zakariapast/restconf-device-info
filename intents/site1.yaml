@@ -1,11 +1,17 @@
-hostname: BRANCH1-DEMO
+system:
+  hostname: BRANCH1-DEMO
+  domain_name: lab.local
+  banner_motd: |
+    ********************************************************
+    *  Authorized users only. Actions are monitored.       *
+    ********************************************************
 
-vlans:
-  - { id: 10, name: Users }
-  - { id: 20, name: Voice }
+ntp:
+  servers:
+    - 129.6.15.28     # NIST
+    - 1.1.1.1
 
-ospf:
-  process_id: 1
-  networks:
-    - { network: "10.10.10.0/24", area: 0 }
-    - { network: "10.20.20.0/24", area: 0 }
+loopbacks:
+  - name: "100"
+    ip: 10.255.100.1
+    mask: 255.255.255.255

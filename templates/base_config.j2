@@ -1,16 +1,19 @@
 ! ===== Intent-Rendered Config =====
-! Hostname
-hostname {{ hostname }}
+! Hostname & Domain
+hostname {{ system.hostname }}
+ip domain name {{ system.domain_name }}
 
-! VLANs
-{% for vlan in vlans %}
-vlan {{ vlan.id }}
- name {{ vlan.name }}
-{% endfor %}
+! Banner MOTD
+banner motd ^
+{{ system.banner_motd | trim }}
+^
 
-! OSPF
-router ospf {{ ospf.process_id }}
-{% for n in ospf.networks %}
- network {{ n.network }} area {{ n.area }}
+! NTP
+ntp server {{ ntp.servers | join("\nntp server ") }}
+
+! Loopbacks
+{% for lb in loopbacks %}
+interface Loopback{{ lb.name }}
+ ip address {{ lb.ip }} {{ lb.mask }}
 {% endfor %}
 ! ===== End =====
