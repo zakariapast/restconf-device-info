@@ -1,4 +1,5 @@
 requests
 python-dotenv
+PyYAML
 Jinja2
 meraki
